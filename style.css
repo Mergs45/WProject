@@ -1,0 +1,80 @@
+body {
+    font-family: 'Inter', sans-serif;
+    touch-action: none;
+}
+
+.time-ruler-gradient {
+    background: linear-gradient(90deg, #4c1d95 0%, #f97316 50%, #4c1d95 100%);
+}
+
+#marker {
+    cursor: ew-resize;
+    z-index: 10;
+    transition: left 0.1s ease-out;
+    width: 4px;
+    height: calc(100% + 16px);
+    top: -8px;
+    background-color: #f97316;
+    border-radius: 4px;
+    box-shadow: 0 0 10px rgba(249, 115, 22, 0.7);
+    transform: translateX(-50%);
+}
+
+.hour-label {
+    transform: translateX(-50%);
+    transition: transform 0.2s ease, color 0.2s ease;
+    cursor: pointer;
+}
+
+.hour-label:last-child { 
+    transform: translateX(-100%); 
+}
+
+.hour-label:first-child { 
+    transform: translateX(0); 
+}
+
+.hour-label.highlighted {
+    color: #f97316;
+    font-weight: 700;
+    transform: translateX(-50%) scale(1.15);
+}
+
+.hour-label.highlighted:last-child { 
+    transform: translateX(-100%) scale(1.15); 
+}
+
+.hour-label.highlighted:first-child { 
+    transform: translateX(0) scale(1.15); 
+}
+
+.tick-mark {
+    position: absolute;
+    width: 2px;
+    height: 100%;
+    background-color: rgba(255, 255, 255, 0.2);
+    transform: translateX(-50%);
+}
+
+.tick-mark.major { 
+    background-color: rgba(255, 255, 255, 0.4); 
+}
+
+.hidden { 
+    display: none; 
+}
+
+.nav-btn {
+    transition: all 0.2s ease-in-out;
+}
+
+.nav-btn.active {
+    background-color: #f97316;
+    color: white;
+    box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
+}
+
+#signature {
+    font-family: 'Dancing Script', cursive;
+    opacity: 0.7;
+}
