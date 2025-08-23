@@ -4,7 +4,7 @@ body {
 }
 
 .time-ruler-gradient {
-    background: linear-gradient(90deg, #4c1d95 0%, #f97316 50%, #4c1d95 100%);
+    background: linear-gradient(90deg, #f97316 0%, #4c1d95 50%, #f43f5e 100%);
 }
 
 #marker {
@@ -60,21 +60,34 @@ body {
     background-color: rgba(255, 255, 255, 0.4); 
 }
 
-.hidden { 
-    display: none; 
-}
-
-.nav-btn {
-    transition: all 0.2s ease-in-out;
-}
-
-.nav-btn.active {
-    background-color: #f97316;
-    color: white;
-    box-shadow: 0 0 15px rgba(249, 115, 22, 0.5);
-}
-
 #signature {
     font-family: 'Dancing Script', cursive;
     opacity: 0.7;
+}
+
+/* --- NUEVOS ESTILOS PARA LA REGLA RESPONSIVA --- */
+
+/* 1. Ancho mínimo para el contenido de la regla */
+.ruler-content-width {
+    min-width: 800px; /* Ajusta este valor si quieres más o menos espacio */
+}
+
+/* 2. Estilos para la barra de scroll (Opcional pero recomendado) */
+/* Para navegadores Webkit (Chrome, Safari, Edge) */
+#ruler-container::-webkit-scrollbar {
+    height: 8px;
+}
+
+#ruler-container::-webkit-scrollbar-track {
+    background: rgba(0,0,0,0.2);
+    border-radius: 4px;
+}
+
+#ruler-container::-webkit-scrollbar-thumb {
+    background: #475569; /* slate-600 */
+    border-radius: 4px;
+}
+
+#ruler-container::-webkit-scrollbar-thumb:hover {
+    background: #64748b; /* slate-500 */
 }

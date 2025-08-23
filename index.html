@@ -4,77 +4,56 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Las horas de Wen ♥</title>
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <!-- Google Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
-    <!-- Custom Stylesheet -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-900 text-white py-8 px-4">
 
     <div class="w-full max-w-7xl mx-auto bg-slate-800 rounded-2xl shadow-2xl p-6 md:p-10 flex flex-col justify-center relative">
         
-        <!-- Initial Mode Selector -->
-        <div id="mode-selector" class="text-center my-auto">
-            <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-500 mb-2">Las horas de Wen ♥</h1>
-            <p class="text-slate-400 mt-2 mb-8">Selecciona una vista para comenzar</p>
-            <div class="flex flex-col sm:flex-row justify-center gap-4">
-                <button data-mode="am" class="mode-btn text-xl sm:text-2xl font-bold bg-sky-500/20 text-sky-300 py-4 px-8 rounded-lg hover:bg-sky-500/40 transition-all">AM</button>
-                <button data-mode="pm" class="mode-btn text-xl sm:text-2xl font-bold bg-orange-500/20 text-orange-300 py-4 px-8 rounded-lg hover:bg-orange-500/40 transition-all">PM</button>
-                <button data-mode="all" class="mode-btn text-xl sm:text-2xl font-bold bg-purple-500/20 text-purple-300 py-4 px-8 rounded-lg hover:bg-purple-500/40 transition-all">Todo el Día</button>
-            </div>
-        </div>
-
-        <!-- Main App Interface (Initially Hidden) -->
-        <div id="main-app" class="hidden">
-            <!-- Reload Button -->
+        <div id="main-app">
             <a href="#" onclick="location.reload()" class="absolute top-4 right-6 md:top-6 md:right-10 text-slate-400 hover:text-white transition-colors z-20" title="Reiniciar">
                 <svg xmlns="http://www.w3.org/2000/svg" class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
                   <path stroke-linecap="round" stroke-linejoin="round" d="M16.023 9.348h4.992v-.001M2.985 19.644v-4.992m0 0h4.992m-4.993 0l3.181 3.183a8.25 8.25 0 0011.667 0l3.181-3.183m-4.991-2.691L15.023 9.348m0 0l-3.181 3.182m0-3.182l-3.181-3.182m3.181 3.182L6.343 12.657m6.344-3.309v4.992" />
                 </svg>
             </a>
 
-            <!-- Header with Navigation -->
             <div class="text-center mb-6">
-                 <div id="navigation" class="inline-flex items-center bg-slate-900/50 rounded-lg p-1 mb-4">
-                    <button data-mode="am" class="nav-btn py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base">AM</button>
-                    <button data-mode="pm" class="nav-btn py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base">PM</button>
-                    <button data-mode="all" class="nav-btn py-2 px-3 sm:px-4 rounded-md text-sm sm:text-base">Todo el Día</button>
-                </div>
-                <p class="text-slate-400 text-sm">Arrastra el marcador o haz clic en una hora.</p>
+                <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-500 mb-2">Las horas de Wen ♥</h1>
+                <p class="text-slate-400 text-sm mt-4">Arrastra el marcador o haz clic en una hora.</p>
             </div>
 
-            <!-- Time Ruler Section -->
-            <div class="my-auto select-none px-2 sm:px-4">
-                <div id="top-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mb-3 h-5"></div>
-                <div id="time-ruler" class="relative w-full h-8 md:h-10 rounded-full time-ruler-gradient overflow-hidden">
-                    <div id="marker" class="absolute"></div>
+            <div class="my-auto select-none">
+                <div id="ruler-container" class="w-full overflow-x-auto pb-4">
+                    <div class="ruler-content-width relative">
+                        <div id="top-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mb-3 h-5"></div>
+                        <div id="time-ruler" class="relative w-full h-8 md:h-10 rounded-full time-ruler-gradient overflow-hidden">
+                            <div id="marker" class="absolute"></div>
+                        </div>
+                        <div id="bottom-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mt-3 h-5"></div>
+                    </div>
                 </div>
-                <div id="bottom-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mt-3 h-5"></div>
                 <div id="ampm-section" class="relative w-full flex text-center text-base md:text-lg font-bold mt-4 pt-4"></div>
             </div>
             
-            <!-- Time Display Section -->
             <div id="clock-display" class="flex flex-col md:flex-row gap-6 mt-10">
                 <div class="bg-slate-900/50 rounded-xl p-6 text-center flex-1">
                     <h2 class="text-base sm:text-lg font-semibold text-sky-400 mb-2">Formato 12 Horas</h2>
                     <p id="time-12hr" class="text-5xl sm:text-6xl md:text-7xl font-bold tracking-wider"></p>
                 </div>
                 <div class="bg-slate-900/50 rounded-xl p-6 text-center flex-1">
-                    <h2 class="text-base sm:text-lg font-semibold text-indigo-400 mb-2">Formato 24 Horas</h2>
+                    <h2 class="text-base sm:text-lg font-semibold text-indigo-400 mb-2">Formato Extendido</h2>
                     <p id="time-24hr" class="text-5xl sm:text-6xl md:text-7xl font-bold tracking-wider"></p>
                 </div>
             </div>
         </div>
 
-        <!-- Signature -->
         <div id="signature" class="absolute bottom-4 right-6 md:bottom-6 md:right-10 text-xl md:text-2xl text-slate-500">Wen</div>
     </div>
 
-    <!-- Custom JavaScript -->
     <script src="script.js" defer></script>
 </body>
 </html>

@@ -1,6 +1,5 @@
 // Get references to all necessary DOM elements
 const elements = {
-    modeSelector: document.getElementById('mode-selector'),
     mainApp: document.getElementById('main-app'),
     timeRuler: document.getElementById('time-ruler'),
     marker: document.getElementById('marker'),
@@ -9,22 +8,19 @@ const elements = {
     ampmSection: document.getElementById('ampm-section'),
     time12hr: document.getElementById('time-12hr'),
     time24hr: document.getElementById('time-24hr'),
-    navigation: document.getElementById('navigation')
 };
 
 // State variables
 let isDragging = false;
-let currentMode = 'all';
-let hourRange = { start: 0, end: 24 };
+const hourRange = { start: 12, end: 32 }; // Permanent range from 12 PM to 32h
 
 /**
  * Sets the marker and clocks to a specific hour.
- * @param {number} hour - The hour to set (0-24).
+ * @param {number} hour - The hour to set.
  */
 function setHour(hour) {
     const totalHours = hourRange.end - hourRange.start;
     const hourInScale = hour - hourRange.start;
-    // Avoid division by zero if totalHours is 0
     const snappedPercentage = totalHours > 0 ? (hourInScale / totalHours) * 100 : 0;
     elements.marker.style.left = `${snappedPercentage}%`;
     updateClocks(hour);
@@ -32,7 +28,7 @@ function setHour(hour) {
 }
 
 /**
- * Generates the hour labels, tick marks, and AM/PM section based on the current mode.
+ * Generates the hour labels, tick marks, and AM/PM section.
  */
 function createRulerElements() {
     // Clear previous elements
@@ -56,20 +52,16 @@ function createRulerElements() {
         tick.style.left = `${positionPercent}%`;
         elements.timeRuler.appendChild(tick);
 
-        // Create Top (24h) Label
+        // Create Top (Extended) Label
         const topLabel = document.createElement('span');
         topLabel.className = 'hour-label absolute';
         topLabel.style.left = `${positionPercent}%`;
         topLabel.textContent = actualHour;
         topLabel.dataset.hour = actualHour; 
         topLabel.addEventListener('click', () => setHour(actualHour));
-        // Responsive label visibility
-        if (actualHour % 3 === 0 || totalHours <= 12) { 
+        // ETIQUETAS AHORA SIEMPRE VISIBLES. Solo se pone en negrita la principal.
+        if (actualHour % 3 === 0) { 
             topLabel.classList.add('font-bold', 'text-white');
-        } else if (window.innerWidth < 1024 && actualHour % 2 !== 0) { 
-            topLabel.classList.add('hidden');
-        } else if (window.innerWidth < 768) { 
-            topLabel.classList.add('hidden');
         }
         elements.topLabels.appendChild(topLabel);
 
@@ -81,40 +73,30 @@ function createRulerElements() {
         bottomLabel.addEventListener('click', () => setHour(actualHour));
         let hour12 = actualHour % 12;
         hour12 = hour12 === 0 ? 12 : hour12;
-        // Responsive label visibility
-        if (actualHour % 3 === 0 || totalHours <= 12) {
-            bottomLabel.textContent = hour12;
+        bottomLabel.textContent = hour12;
+        // ETIQUETAS AHORA SIEMPRE VISIBLES. Solo se pone en negrita la principal.
+        if (actualHour % 3 === 0) {
             bottomLabel.classList.add('font-bold', 'text-white');
-        } else if (window.innerWidth < 1024 && actualHour % 2 !== 0) {
-            bottomLabel.classList.add('hidden');
-        } else if (window.innerWidth < 768) {
-            bottomLabel.classList.add('hidden');
-        } else {
-            bottomLabel.textContent = hour12;
         }
         elements.bottomLabels.appendChild(bottomLabel);
     }
     
-    // AM/PM Section Logic
-    if (currentMode === 'all') {
-        elements.ampmSection.innerHTML = `
-            <div class="w-1/2 border-t-2 border-sky-500 text-sky-400">AM</div>
-            <div class="w-1/2 border-t-2 border-orange-500 text-orange-400">PM</div>`;
-    } else if (currentMode === 'am') {
-        elements.ampmSection.innerHTML = `<div class="w-full border-t-2 border-sky-500 text-sky-400">AM</div>`;
-    } else {
-        elements.ampmSection.innerHTML = `<div class="w-full border-t-2 border-orange-500 text-orange-400">PM</div>`;
-    }
+    // Combined PM / AM (Extendido) Section
+    elements.ampmSection.innerHTML = `
+        <div class="w-[60%] border-t-2 border-orange-500 text-orange-400">PM</div>
+        <div class="w-[40%] border-t-2 border-rose-500 text-rose-400">AM (Extendido)</div>
+    `;
 }
 
 /**
  * Updates the digital clock displays based on the selected hour.
- * @param {number} hour24 - The selected hour in 24-hour format.
+ * @param {number} hourExt - The selected hour in extended format.
  */
-function updateClocks(hour24) {
-    elements.time24hr.textContent = hour24 === 24 ? '24' : hour24;
-    const ampm = hour24 >= 12 && hour24 < 24 ? 'PM' : 'AM';
-    let hour12 = hour24 % 12;
+function updateClocks(hourExt) {
+    elements.time24hr.textContent = hourExt;
+    const isPM = hourExt >= 12 && hourExt < 24;
+    const ampm = isPM ? 'PM' : 'AM';
+    let hour12 = hourExt % 12;
     hour12 = hour12 ? hour12 : 12;
     elements.time12hr.textContent = `${hour12} ${ampm}`;
 }
@@ -145,44 +127,16 @@ function updatePosition(clientX) {
 }
 
 /**
- * Sets the initial marker position based on the current system time and selected mode.
- * @param {string} mode - The current view mode ('am', 'pm', or 'all').
+ * Sets the initial marker position based on the current system time.
  */
-function setInitialTime(mode) {
+function setInitialTime() {
     const now = new Date();
     let currentHour = now.getHours();
-    // Adjust initial hour if it falls outside the selected AM/PM range
-    if (mode === 'am' && currentHour >= 12) currentHour = 0;
-    if (mode === 'pm' && currentHour < 12) currentHour = 12;
+    if (currentHour < hourRange.start) {
+       currentHour = hourRange.start;
+    }
     setHour(currentHour);
 }
-
-/**
- * Switches the view mode and rebuilds the ruler.
- * @param {string} mode - The new mode to switch to.
- */
-function switchMode(mode) {
-    currentMode = mode;
-    if (mode === 'am') hourRange = { start: 0, end: 12 };
-    else if (mode === 'pm') hourRange = { start: 12, end: 24 };
-    else hourRange = { start: 0, end: 24 };
-    
-    // Update active state on navigation buttons
-    document.querySelectorAll('.nav-btn').forEach(btn => {
-        btn.classList.toggle('active', btn.dataset.mode === mode);
-    });
-
-    createRulerElements();
-    setInitialTime(mode);
-    // Show the main app and hide the initial selector
-    elements.modeSelector.classList.add('hidden');
-    elements.mainApp.classList.remove('hidden');
-}
-
-// Add event listeners to all mode-switching buttons
-document.querySelectorAll('.mode-btn, .nav-btn').forEach(btn => {
-    btn.addEventListener('click', () => switchMode(btn.dataset.mode));
-});
 
 // --- Drag and Drop Event Handlers ---
 function startDrag(e) {
@@ -211,8 +165,16 @@ document.addEventListener('touchend', endDrag);
 
 // Rebuild the ruler on window resize to adjust labels
 window.addEventListener('resize', () => {
-     if (!elements.mainApp.classList.contains('hidden')) {
-         createRulerElements();
-         setInitialTime(currentMode);
-     }
+    const currentHourStr = document.querySelector('.hour-label.highlighted')?.dataset.hour;
+    const currentHour = currentHourStr ? parseInt(currentHourStr, 10) : hourRange.start;
+    createRulerElements();
+    setHour(currentHour);
 });
+
+// --- Initial App Setup ---
+function init() {
+    createRulerElements();
+    setInitialTime();
+}
+
+init(); // Run the app setup
