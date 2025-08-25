@@ -88,9 +88,6 @@ body {
 #rcontainer::-webkit-scrollbar-thumb:hover {
     background: #64748b;
 }
-/* ... (Estilos anteriores) ... */
-
-/* ... (Estilos de la regla de tiempo y generales) ... */
 
 /* --- ESTILOS PARA LA CALCULADORA FINAL --- */
 
@@ -116,7 +113,6 @@ body {
     text-align: center;
     font-size: 1.1rem;
     padding: 6px 2px;
-    -moz-appearance: textfield; /* Firefox */
 }
 .split-time-input .time-hour:focus, .split-time-input .time-minute:focus {
     outline: none;
@@ -202,3 +198,97 @@ body {
 }
 
 /* ... (Resto de estilos de la calculadora) ... */
+body {
+    font-family: 'Inter', sans-serif;
+    touch-action: none;
+}
+.time-ruler-gradient {
+    background: linear-gradient(90deg, #f97316 0%, #4c1d95 50%, #f43f5e 100%);
+}
+#marker {
+    cursor: ew-resize; z-index: 10; transition: left 0.1s ease-out;
+    width: 4px; height: calc(100% + 16px); top: -8px;
+    background-color: #22d3ee; border-radius: 4px;
+    box-shadow: 0 0 12px rgba(34, 211, 238, 0.8);
+    transform: translateX(-50%);
+}
+.hour-label {
+    transform: translateX(-50%); transition: transform 0.2s ease, color 0.2s ease; cursor: pointer;
+}
+.hour-label:last-child { transform: translateX(-100%); }
+.hour-label:first-child { transform: translateX(0); }
+.hour-label.highlighted {
+    color: #22d3ee; font-weight: 700; transform: translateX(-50%) scale(1.15);
+}
+.hour-label.highlighted:last-child { transform: translateX(-100%) scale(1.15); }
+.hour-label.highlighted:first-child { transform: translateX(0) scale(1.15); }
+.tick-mark {
+    position: absolute; width: 2px; height: 100%;
+    background-color: rgba(255, 255, 255, 0.2); transform: translateX(-50%);
+}
+.tick-mark.major { background-color: rgba(255, 255, 255, 0.4); }
+#signature { font-family: 'Dancing Script', cursive; opacity: 0.7; }
+
+/* --- ESTILOS PARA LA REGLA RESPONSIVA --- */
+#ruler-container {
+    overflow-x: scroll; /* CAMBIADO: Scroll siempre visible */
+}
+.ruler-content-width { min-width: 800px; }
+#ruler-container::-webkit-scrollbar { height: 8px; }
+#ruler-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
+#ruler-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
+#ruler-container::-webkit-scrollbar-thumb:hover { background: #64748b; }
+
+/* --- ESTILOS PARA LA CALCULADORA FINAL --- */
+.custom-time-input {
+    display: flex; align-items: center; gap: 6px;
+}
+.split-time-input {
+    display: flex; align-items: center; flex-grow: 1;
+    background-color: #334155; border: 1px solid #475569; border-radius: 6px; padding: 0 4px;
+}
+.split-time-input .time-hour, .split-time-input .time-minute {
+    width: 50%; background: transparent; border: none; color: white;
+    text-align: center; font-size: 1.1rem; padding: 6px 2px;
+}
+.split-time-input .time-hour:focus, .split-time-input .time-minute:focus {
+    outline: none; background-color: rgba(30, 41, 59, 0.5);
+}
+.split-time-input input::-webkit-outer-spin-button,
+.split-time-input input::-webkit-inner-spin-button {
+    -webkit-appearance: none; margin: 0;
+}
+.split-time-input .separator { color: #64748b; font-weight: bold; }
+.ampm-buttons { display: flex; flex-direction: column; gap: 2px; }
+.ampm-buttons button {
+    border: 1px solid #475569; background-color: transparent; color: #cbd5e1;
+    padding: 2px 6px; font-size: 0.7rem; border-radius: 4px; cursor: pointer; transition: all 0.2s ease;
+}
+.ampm-buttons button:hover { background-color: #475569; }
+.ampm-buttons button.active {
+    background-color: #38bdf8; border-color: #0ea5e9; color: white; font-weight: bold;
+}
+.clear-btn {
+    background: #475569; color: #94a3b8; border: none; border-radius: 50%;
+    width: 24px; height: 24px; display: flex; align-items: center; justify-content: center;
+    cursor: pointer; font-size: 1.2rem; line-height: 1; transition: all 0.2s ease;
+}
+.clear-btn:hover { background: #ef4444; color: white; }
+#breakdown-container h4 {
+    font-size: 1.1rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.5rem;
+    border-bottom: 1px solid #475569; padding-bottom: 0.5rem;
+}
+#breakdown-container ul { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; }
+#breakdown-container li {
+    display: flex; justify-content: space-between; padding: 0.5rem 0.25rem;
+    border-bottom: 1px solid #334155;
+}
+#breakdown-container li:last-child { border-bottom: none; }
+#breakdown-container .duration { font-weight: 600; color: #e2e8f0; }
+#summary-container p {
+    font-size: 0.9rem; line-height: 1.6; background-color: rgba(0, 0, 0, 0.2);
+    padding: 0.75rem; border-radius: 8px; color: #cbd5e1;
+    border-left: 3px solid #38bdf8;
+}
+#total-descansos.excedido, #balance.negativo { color: #ef4444; }
+#balance.positivo { color: #22c55e; }

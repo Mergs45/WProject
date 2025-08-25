@@ -190,16 +190,15 @@ document.addEventListener('DOMContentLoaded', () => {
     const addDescansoBtn = document.getElementById('add-descanso');
     const descansosContainer = document.getElementById('descansos-container');
     const timeEntriesContainer = document.getElementById('time-entries-container');
-    const addBreakMinutesBtn = document.getElementById('add-break-minutes');
-    const breakMinutesInput = document.getElementById('break-minutes-input');
-    const addedBreaksList = document.getElementById('added-breaks-list');
 
-    let addedBreaks = []; // Array para guardar los minutos de breaks
     const DEFAULT_DESCANSOS = [
+        { title: 'Break 1', label: 'Break' },
+        { title: 'Break 2', label: 'Break' },
         { title: 'Lunch', label: 'Lunch' },
-        { title: 'Audience', label: 'Audience' }
+        { title: 'Outage', label: 'Outage' }
     ];
 
+    // ========= BLOQUE DE FUNCIONES CORREGIDO =========
     function parse12hToMinutes(hours, minutes, ampm) {
         if (isNaN(hours) || isNaN(minutes)) return null;
         if (ampm === 'pm' && hours < 12) hours += 12;
@@ -235,14 +234,18 @@ document.addEventListener('DOMContentLoaded', () => {
         hours = hours ? hours : 12; // La hora '0' debe ser '12'
         return `<strong>${hours}:${String(minutes).padStart(2, '0')} ${ampm}</strong>`;
     }
+    // ========= FIN DEL BLOQUE CORREGIDO =========
 
-    function generarResumenNarrativo(sortedEvents, breakMinutes) {
+    function generarResumenNarrativo(sortedEvents) {
         if (sortedEvents.length < 2) return "";
         let phrases = [`El empleado inició su jornada a las ${formatMinutesTo12hTime(sortedEvents[0].minutes)}.`];
         sortedEvents.forEach(event => {
+            let label = event.label.toLowerCase();
+            if (label.includes('break')) label = 'un break';
+
             switch (event.type) {
                 case 'break_start':
-                    phrases.push(`Tomó su ${event.label} a las ${formatMinutesTo12hTime(event.minutes)}`);
+                    phrases.push(`Tomó ${label} a las ${formatMinutesTo12hTime(event.minutes)}`);
                     break;
                 case 'break_end':
                     phrases.push(`y regresó a las ${formatMinutesTo12hTime(event.minutes)}.`);
@@ -252,9 +255,6 @@ document.addEventListener('DOMContentLoaded', () => {
                     break;
             }
         });
-        if (breakMinutes > 0) {
-            phrases.push(`Adicionalmente, se registraron <strong>${breakMinutes} minutos</strong> en breaks cortos.`);
-        }
         return `<p>${phrases.join(' ').replace(/\. T/g, ', t')}</p>`;
     }
 
@@ -263,7 +263,7 @@ document.addEventListener('DOMContentLoaded', () => {
         document.querySelectorAll('.entry-item').forEach(item => {
             const idaContainer = item.querySelector('.ida-container');
             const regresoContainer = item.querySelector('.regreso-container');
-            if (!idaContainer || !regresoContainer) return; // Salta el sumador de breaks
+            if (!idaContainer || !regresoContainer) return; 
 
             const idaMins = getMinutesFromCustomInput(idaContainer);
             const regresoMins = getMinutesFromCustomInput(regresoContainer);
@@ -274,8 +274,8 @@ document.addEventListener('DOMContentLoaded', () => {
                 let endMins = regresoMins;
                 if (endMins < idaMins) endMins += 24 * 60;
                 if (type === "Jornada") {
-                    events.push({ minutes: idaMins, type: 'work_start' });
-                    events.push({ minutes: endMins, type: 'work_end' });
+                    events.push({ minutes: idaMins, type: 'work_start', label });
+                    events.push({ minutes: endMins, type: 'work_end', label });
                 } else {
                     events.push({ minutes: idaMins, type: 'break_start', label });
                     events.push({ minutes: endMins, type: 'break_end', label });
@@ -291,7 +291,7 @@ document.addEventListener('DOMContentLoaded', () => {
         events.sort((a, b) => a.minutes - b.minutes);
 
         let tiempoProductivoTotal = 0;
-        let descansoDeRangos = 0;
+        let tiempoDescansoTotal = 0;
         let breakdownHtml = '<h4>Desglose de la Jornada</h4><ul>';
 
         for (let i = 0; i < events.length - 1; i++) {
@@ -300,20 +300,14 @@ document.addEventListener('DOMContentLoaded', () => {
                 tiempoProductivoTotal += duration;
                 breakdownHtml += `<li><span>Bloque de Trabajo</span> <span class="duration">${formatMinutesToTime(duration)}</span></li>`;
             } else if (events[i].type === 'break_start') {
-                descansoDeRangos += duration;
-                breakdownHtml += `<li><span>${events[i].label}</span> <span class="duration">${formatMinutesToTime(duration)}</span></li>`;
+                tiempoDescansoTotal += duration;
+                const title = events[i].label;
+                breakdownHtml += `<li><span>${title}</span> <span class="duration">${formatMinutesToTime(duration)}</span></li>`;
             }
         }
         
-        const descansoDeBreaks = addedBreaks.reduce((sum, current) => sum + current, 0);
-        const tiempoDescansoTotal = descansoDeRangos + descansoDeBreaks;
-
-        if (descansoDeBreaks > 0) {
-             breakdownHtml += `<li><span>Breaks Cortos (sumados)</span> <span class="duration">${formatMinutesToTime(descansoDeBreaks)}</span></li>`;
-        }
-        
         document.getElementById('breakdown-container').innerHTML = breakdownHtml + '</ul>';
-        document.getElementById('summary-container').innerHTML = generarResumenNarrativo(events, descansoDeBreaks);
+        document.getElementById('summary-container').innerHTML = generarResumenNarrativo(events);
 
         const MAX_DESCANSO = 1.5 * 60;
         const tiempoAReponer = Math.max(0, tiempoDescansoTotal - MAX_DESCANSO);
@@ -337,62 +331,36 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function createEntryHTML(title, label) {
         return `
-            <div class="entry-item p-3 bg-slate-800/50 rounded-lg" data-event-type="Descanso" data-event-label="${label}">
+            <div class="entry-item p-3 bg-slate-800/50 rounded-lg" data-event-type="Descanso" data-event-label="${title}">
                 <h4 class="font-semibold text-slate-200 mb-2">${title}</h4>
                 <div class="grid grid-cols-2 gap-4">
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Ida</label>
                         <div class="ida-container custom-time-input">
                             <div class="split-time-input"><input type="number" class="time-hour" placeholder="HH" min="1" max="12"><span class="separator">:</span><input type="number" class="time-minute" placeholder="MM" min="0" max="59"></div>
-                            <div class="ampm-buttons"><button class="am-btn">AM</button><button class="pm-btn active">PM</button></div>
-                            <button class="clear-btn" title="Borrar hora">&times;</button>
+                            <div class="ampm-buttons"><button class="am-btn" tabindex="-1">AM</button><button class="pm-btn active" tabindex="-1">PM</button></div>
+                            <button class="clear-btn" title="Borrar hora" tabindex="-1">&times;</button>
                         </div>
                     </div>
                     <div>
                         <label class="block text-xs font-medium text-slate-400 mb-1">Regreso</label>
                         <div class="regreso-container custom-time-input">
                             <div class="split-time-input"><input type="number" class="time-hour" placeholder="HH" min="1" max="12"><span class="separator">:</span><input type="number" class="time-minute" placeholder="MM" min="0" max="59"></div>
-                            <div class="ampm-buttons"><button class="am-btn">AM</button><button class="pm-btn active">PM</button></div>
-                            <button class="clear-btn" title="Borrar hora">&times;</button>
+                            <div class="ampm-buttons"><button class="am-btn" tabindex="-1">AM</button><button class="pm-btn active" tabindex="-1">PM</button></div>
+                            <button class="clear-btn" title="Borrar hora" tabindex="-1">&times;</button>
                         </div>
                     </div>
                 </div>
             </div>`;
     }
 
-    function updateBreaksUI() {
-        addedBreaksList.innerHTML = '';
-        addedBreaks.forEach((mins, index) => {
-            const tag = document.createElement('span');
-            tag.className = 'break-tag';
-            tag.innerHTML = `${mins} min <button data-index="${index}">&times;</button>`;
-            addedBreaksList.appendChild(tag);
-        });
-    }
-
     function initCalculator() {
         DEFAULT_DESCANSOS.forEach(desc => {
-            descansosContainer.innerHTML += createEntryHTML(desc.title, desc.label);
+            const tempDiv = document.createElement('div');
+            tempDiv.innerHTML = createEntryHTML(desc.title, desc.label);
+            descansosContainer.appendChild(tempDiv.firstElementChild);
         });
     }
-
-    addBreakMinutesBtn.addEventListener('click', () => {
-        const mins = parseInt(breakMinutesInput.value);
-        if (!isNaN(mins) && mins > 0) {
-            addedBreaks.push(mins);
-            updateBreaksUI();
-            breakMinutesInput.value = '';
-            breakMinutesInput.focus();
-        }
-    });
-
-    addedBreaksList.addEventListener('click', (e) => {
-        if (e.target.tagName === 'BUTTON') {
-            const indexToRemove = parseInt(e.target.dataset.index);
-            addedBreaks.splice(indexToRemove, 1);
-            updateBreaksUI();
-        }
-    });
 
     timeEntriesContainer.addEventListener('input', e => {
         if (e.target.matches('.time-hour') && e.target.value.length >= 2) {
@@ -415,9 +383,16 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     calcularBtn.addEventListener('click', calcularJornada);
+    
     addDescansoBtn.addEventListener('click', () => {
-        const count = descansosContainer.children.length - DEFAULT_DESCANSOS.length + 1;
-        descansosContainer.innerHTML += createEntryHTML(`Descanso Extra ${count}`, `Descanso Extra`);
+        const count = (descansosContainer.children.length - DEFAULT_DESCANSOS.length) + 1;
+        const title = `Descanso Extra ${count}`;
+        const newEntryHTML = createEntryHTML(title, title);
+        
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newEntryHTML;
+        
+        descansosContainer.appendChild(tempDiv.firstElementChild);
     });
 
     initCalculator();
