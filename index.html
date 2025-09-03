@@ -17,17 +17,23 @@
         <div id="main-app">
             <div class="text-center mb-6">
                 <h1 class="text-3xl md:text-4xl font-bold text-transparent bg-clip-text bg-gradient-to-r from-orange-400 to-purple-500 mb-2">Las horas de Wen ♥</h1>
-                <p class="text-slate-400 text-sm mt-4">Arrastra el marcador o haz clic en una hora.</p>
             </div>
             <div class="my-auto select-none">
                 <div id="ruler-container" class="w-full pb-4">
                     <div class="ruler-content-width relative">
+                        <div id="ampm-section-zoomed" class="relative w-full flex-none text-center text-base md:text-lg font-bold hidden mb-2"></div>
                         <div id="top-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mb-3 h-5"></div>
-                        <div id="time-ruler" class="relative w-full h-8 md:h-10 rounded-full time-ruler-gradient overflow-hidden"><div id="marker" class="absolute"></div></div>
+                        <div id="time-ruler" class="relative w-full h-8 md:h-10 rounded-full time-ruler-gradient overflow-hidden">
+                            <div id="marker" class="absolute"></div>
+                        </div>
+                        <div id="schedule-bar" class="relative w-full h-4 mt-1 bg-slate-700 rounded-full">
+                            <div id="ruler-segments" class="absolute top-0 left-0 w-full h-full"></div>
+                        </div>
                         <div id="bottom-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mt-3 h-5"></div>
+                        <div id="ampm-section" class="relative w-full flex text-center text-base md:text-lg font-bold mt-6 mb-2 pt-2"></div>
+                        <div id="ruler-info-container" class="mt-4 flex flex-wrap gap-x-4 gap-y-2 justify-center"></div>
                     </div>
                 </div>
-                <div id="ampm-section" class="relative w-full flex text-center text-base md:text-lg font-bold mt-4 pt-4"></div>
             </div>
             <div id="clock-display" class="flex flex-col md:flex-row gap-6 mt-10">
                 <div class="bg-slate-900/50 rounded-xl p-6 text-center flex-1"><h2 class="text-base sm:text-lg font-semibold text-sky-400 mb-2">Formato 12 Horas</h2><p id="time-12hr" class="text-5xl sm:text-6xl md:text-7xl font-bold tracking-wider"></p></div>
@@ -36,22 +42,27 @@
 
             <div id="calculator-section" class="mt-10 pt-8 border-t border-slate-700">
                 <h2 class="text-2xl font-bold text-center mb-6 text-transparent bg-clip-text bg-gradient-to-r from-sky-400 to-indigo-400">Calculadora de Jornada Laboral</h2>
+                
+                <div class="mb-6">
+                    <label for="employee-name-input" class="block text-sm font-medium text-slate-300 mb-2">Nombre del Empleado:</label>
+                    <input type="text" id="employee-name-input" value="Empleado">
+                </div>
+
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-6 items-start">
                     <div id="time-entries-container" class="bg-slate-900/50 rounded-xl p-6 space-y-4">
                         <div id="jornada-container"></div>
                         <div id="descansos-container" class="space-y-4"></div>
-                        <button id="add-descanso" class="mt-2 w-full text-sm py-2 px-4 rounded-md bg-sky-500/30 hover:bg-sky-500/50 text-sky-300 transition-all">+ Añadir Descanso Extra</button>
+                        <div class="flex gap-4 mt-2">
+                            <button id="add-outage" class="w-full text-sm py-2 px-4 rounded-md bg-yellow-500/30 hover:bg-yellow-500/50 text-yellow-300 transition-all">+ Outage</button>
+                            <button id="add-reposicion" class="w-full text-sm py-2 px-4 rounded-md bg-green-500/30 hover:bg-green-500/50 text-green-300 transition-all">+ Reposición</button>
+                        </div>
                     </div>
 
                     <div class="bg-slate-900/50 rounded-xl p-6 sticky top-6">
                         <button id="calcular" class="w-full text-lg font-bold bg-green-600 hover:bg-green-500 text-white py-3 px-8 rounded-lg transition-all mb-6">Calcular Horas</button>
-                        <div id="breakdown-container" class="mb-4"></div>
                         <div id="summary-container" class="mb-6"></div>
-                        <div id="results-container" class="text-center border-t border-slate-700 pt-4 space-y-3">
-                            <div class="flex justify-between items-center text-lg"><h3 class="font-semibold text-slate-200">Descanso Total</h3><p id="total-descansos" class="font-bold tracking-wider">00:00</p></div>
-                            <div id="tiempo-reponer-wrapper" class="hidden flex justify-between items-center text-lg"><h3 class="font-semibold text-rose-400">Overtime</h3><p id="tiempo-reponer" class="font-bold text-rose-400 tracking-wider">00:00</p></div>
-                            <div class="flex justify-between items-center text-lg pt-2 border-t border-slate-800"><h3 class="font-semibold text-slate-200">Trabajo Total</h3><p id="balance" class="font-bold tracking-wider">00:00</p></div>
-                        </div>
+                        <div id="results-container" class="text-left pt-4 space-y-2 text-base">
+                            </div>
                     </div>
                 </div>
             </div>
@@ -59,6 +70,7 @@
 
         <div id="signature" class="absolute bottom-4 right-6 md:bottom-6 md:right-10 text-xl md:text-2xl text-slate-500">Wen</div>
     </div>
+    
     <script src="script.js"></script>
 </body>
 </html>

@@ -3,20 +3,64 @@
 // =====================================================================
 
 const elements = { mainApp: document.getElementById('main-app'), timeRuler: document.getElementById('time-ruler'), marker: document.getElementById('marker'), topLabels: document.getElementById('top-labels'), bottomLabels: document.getElementById('bottom-labels'), ampmSection: document.getElementById('ampm-section'), time12hr: document.getElementById('time-12hr'), time24hr: document.getElementById('time-24hr'), };
-let isDragging = false; const hourRange = { start: 12, end: 32 };
-function setHour(hour) { const totalHours = hourRange.end - hourRange.start; const hourInScale = hour - hourRange.start; const snappedPercentage = totalHours > 0 ? (hourInScale / totalHours) * 100 : 0; elements.marker.style.left = `${snappedPercentage}%`; updateClocks(hour); highlightLabels(hour); }
-function createRulerElements() { elements.topLabels.innerHTML = ''; elements.bottomLabels.innerHTML = ''; elements.ampmSection.innerHTML = ''; Array.from(elements.timeRuler.children).forEach(child => { if (child.id !== 'marker') child.remove(); }); const totalHours = hourRange.end - hourRange.start; for (let i = 0; i <= totalHours; i++) { const actualHour = hourRange.start + i; const positionPercent = totalHours > 0 ? (i / totalHours) * 100 : 0; const tick = document.createElement('div'); tick.className = 'tick-mark'; if (actualHour % 3 === 0) tick.classList.add('major'); tick.style.left = `${positionPercent}%`; elements.timeRuler.appendChild(tick); const topLabel = document.createElement('span'); topLabel.className = 'hour-label absolute'; topLabel.style.left = `${positionPercent}%`; topLabel.textContent = actualHour; topLabel.dataset.hour = actualHour; topLabel.addEventListener('click', () => setHour(actualHour)); if (actualHour % 3 === 0) { topLabel.classList.add('font-bold', 'text-white'); } elements.topLabels.appendChild(topLabel); const bottomLabel = document.createElement('span'); bottomLabel.className = 'hour-label absolute'; bottomLabel.style.left = `${positionPercent}%`; bottomLabel.dataset.hour = actualHour; bottomLabel.addEventListener('click', () => setHour(actualHour)); let hour12 = actualHour % 12; hour12 = hour12 === 0 ? 12 : hour12; bottomLabel.textContent = hour12; if (actualHour % 3 === 0) { bottomLabel.classList.add('font-bold', 'text-white'); } elements.bottomLabels.appendChild(bottomLabel); } elements.ampmSection.innerHTML = ` <div class="w-[60%] border-t-2 border-orange-500 text-orange-400">PM</div> <div class="w-[40%] border-t-2 border-rose-500 text-rose-400">AM (Extendido)</div> `; }
-function updateClocks(hourExt) { elements.time24hr.textContent = hourExt; const isPM = hourExt >= 12 && hourExt < 24; const ampm = isPM ? 'PM' : 'AM'; let hour12 = hourExt % 12; hour12 = hour12 ? hour12 : 12; elements.time12hr.textContent = `${hour12} ${ampm}`; }
-function highlightLabels(hour) { document.querySelectorAll('.hour-label').forEach(l => l.classList.remove('highlighted')); document.querySelectorAll(`.hour-label[data-hour="${hour}"]`).forEach(l => l.classList.add('highlighted')); }
-function updatePosition(clientX) { const rulerRect = elements.timeRuler.getBoundingClientRect(); let x = clientX - rulerRect.left; if (x < 0) x = 0; if (x > rulerRect.width) x = rulerRect.width; const percentage = x / rulerRect.width; const totalHours = hourRange.end - hourRange.start; const closestHourInScale = Math.round(percentage * totalHours); const closestActualHour = hourRange.start + closestHourInScale; setHour(closestActualHour); }
-function setInitialTime() { const now = new Date(); let currentHour = now.getHours(); if (currentHour < hourRange.start) { currentHour = hourRange.start; } setHour(currentHour); }
+let isDragging = false; 
+const masterHourRange = { start: 12, end: 32 };
+let activeHourRange = { ...masterHourRange };
+
+function setHour(hour) { 
+    const totalHours = activeHourRange.end - activeHourRange.start; 
+    const hourInScale = hour - activeHourRange.start; 
+    const snappedPercentage = totalHours > 0 ? (hourInScale / totalHours) * 100 : 0; 
+    elements.marker.style.left = `${snappedPercentage}%`; 
+    updateClocks(hour); 
+    highlightLabels(hour); 
+}
+
+function updateClocks(hourExt) { 
+    elements.time24hr.textContent = hourExt; 
+    const isPM = hourExt >= 12 && hourExt < 24; 
+    const ampm = isPM ? 'PM' : 'AM'; 
+    let hour12 = hourExt % 12; 
+    hour12 = hour12 ? hour12 : 12; 
+    elements.time12hr.textContent = `${hour12} ${ampm}`; 
+}
+
+function highlightLabels(hour) { 
+    document.querySelectorAll('.hour-label').forEach(l => l.classList.remove('highlighted')); 
+    document.querySelectorAll(`.hour-label[data-hour="${hour}"]`).forEach(l => l.classList.add('highlighted')); 
+}
+
+function updatePosition(clientX) { 
+    const rulerRect = elements.timeRuler.getBoundingClientRect(); 
+    let x = clientX - rulerRect.left; 
+    if (x < 0) x = 0; 
+    if (x > rulerRect.width) x = rulerRect.width; 
+    const percentage = x / rulerRect.width; 
+    const totalHours = activeHourRange.end - activeHourRange.start; 
+    const closestHourInScale = Math.round(percentage * totalHours); 
+    const closestActualHour = activeHourRange.start + closestHourInScale; 
+    setHour(closestActualHour); 
+}
+
+function setInitialTime() { 
+    const now = new Date(); 
+    let currentHour = now.getHours(); 
+    if (currentHour < activeHourRange.start) { 
+        currentHour = activeHourRange.start; 
+    } 
+    setHour(currentHour); 
+}
+
 function startDrag(e) { isDragging = true; updatePosition(e.touches ? e.touches[0].clientX : e.clientX); }
 function onDrag(e) { if (isDragging) { e.preventDefault(); updatePosition(e.touches ? e.touches[0].clientX : e.clientX); } }
 function endDrag() { isDragging = false; }
-elements.timeRuler.addEventListener('mousedown', startDrag); document.addEventListener('mousemove', onDrag); document.addEventListener('mouseup', endDrag); elements.timeRuler.addEventListener('touchstart', startDrag); document.addEventListener('touchmove', onDrag); document.addEventListener('touchend', endDrag);
-window.addEventListener('resize', () => { const currentHourStr = document.querySelector('.hour-label.highlighted')?.dataset.hour; const currentHour = currentHourStr ? parseInt(currentHourStr, 10) : hourRange.start; createRulerElements(); setHour(currentHour); });
-function initRuler() { createRulerElements(); setInitialTime(); }
-initRuler();
+
+elements.timeRuler.addEventListener('mousedown', startDrag); 
+document.addEventListener('mousemove', onDrag); 
+document.addEventListener('mouseup', endDrag); 
+elements.timeRuler.addEventListener('touchstart', startDrag); 
+document.addEventListener('touchmove', onDrag); 
+document.addEventListener('touchend', endDrag);
 
 // =====================================================================
 // =========== LÓGICA PARA LA CALCULADORA DE HORAS (FINAL) =============
@@ -24,22 +68,186 @@ initRuler();
 
 document.addEventListener('DOMContentLoaded', () => {
     const calcularBtn = document.getElementById('calcular');
-    const addDescansoBtn = document.getElementById('add-descanso');
     const jornadaContainer = document.getElementById('jornada-container');
     const descansosContainer = document.getElementById('descansos-container');
     const timeEntriesContainer = document.getElementById('time-entries-container');
+    const scheduleBar = document.getElementById('schedule-bar');
+    const rulerInfoContainer = document.getElementById('ruler-info-container');
+    const segmentsContainer = document.getElementById('ruler-segments');
+    const employeeNameInput = document.getElementById('employee-name-input');
+    const addOutageBtn = document.getElementById('add-outage');
+    const addReposicionBtn = document.getElementById('add-reposicion');
+    const resultsContainer = document.getElementById('results-container');
+
+    let lastCalculatedEvents = [];
+    let isZoomed = false;
 
     const DEFAULT_DESCANSOS = [
-        { title: 'Break 1', label: 'Break' },
-        { title: 'Break 2', label: 'Break' },
-        { title: 'Lunch', label: 'Lunch' },
-        { title: 'Outage', label: 'Outage' }
+        { title: 'Break 1', label: 'Break', limit: 15 },
+        { title: 'Break 2', label: 'Break', limit: 15 },
+        { title: 'Lunch', label: 'Lunch', limit: 60 }
     ];
+
+    function updateRulerView(currentHourRange, events) {
+        activeHourRange = currentHourRange;
+        elements.topLabels.innerHTML = '';
+        elements.bottomLabels.innerHTML = '';
+        Array.from(elements.timeRuler.children).forEach(child => { if (child.id !== 'marker') child.remove(); });
+        
+        const totalHours = currentHourRange.end - currentHourRange.start;
+        if (totalHours <= 0) return;
+
+        for (let i = 0; i <= totalHours; i++) {
+            const actualHour = currentHourRange.start + i;
+            const positionPercent = (i / totalHours) * 100;
+            
+            const tick = document.createElement('div');
+            tick.className = 'tick-mark';
+            if (actualHour % 3 === 0) tick.classList.add('major');
+            tick.style.left = `${positionPercent}%`;
+            elements.timeRuler.appendChild(tick);
+
+            const topLabel = document.createElement('span');
+            topLabel.className = 'hour-label absolute';
+            topLabel.style.left = `${positionPercent}%`;
+            topLabel.textContent = actualHour;
+            topLabel.dataset.hour = actualHour;
+            topLabel.addEventListener('click', () => setHour(actualHour));
+            if (actualHour % 3 === 0) topLabel.classList.add('font-bold', 'text-white');
+            elements.topLabels.appendChild(topLabel);
+
+            const bottomLabel = document.createElement('span');
+            bottomLabel.className = 'hour-label absolute';
+            bottomLabel.style.left = `${positionPercent}%`;
+            bottomLabel.dataset.hour = actualHour;
+            bottomLabel.addEventListener('click', () => setHour(actualHour));
+            let hour12 = actualHour % 12;
+            hour12 = hour12 === 0 ? 12 : hour12;
+            bottomLabel.textContent = hour12;
+            if (actualHour % 3 === 0) bottomLabel.classList.add('font-bold', 'text-white');
+            elements.bottomLabels.appendChild(bottomLabel);
+        }
+
+        segmentsContainer.innerHTML = '';
+        rulerInfoContainer.innerHTML = '';
+
+        function minutesToPercentage(minutes) {
+            const rulerStartMins = currentHourRange.start * 60;
+            const totalRulerMins = (currentHourRange.end - currentHourRange.start) * 60;
+            if (totalRulerMins <= 0) return 0;
+            const minutesOnScale = minutes - rulerStartMins;
+            const percentage = (minutesOnScale / totalRulerMins) * 100;
+            return Math.max(0, Math.min(100, percentage));
+        }
+
+        if (!events || events.length === 0) return;
+
+        for (let i = 0; i < events.length - 1; i++) {
+            const startEvent = events[i];
+            const endEvent = events[i + 1];
+
+            const durationInMinutes = endEvent.minutes - startEvent.minutes;
+            if (durationInMinutes <= 0) continue;
+
+            const formattedDuration = formatMinutesToTime(durationInMinutes);
+            const startTimeStr = formatMinutesTo12hTime(startEvent.minutes).replace(/<\/?strong>/g, '');
+            const endTimeStr = formatMinutesTo12hTime(endEvent.minutes).replace(/<\/?strong>/g, '');
+            const startPercentage = minutesToPercentage(startEvent.minutes);
+            const widthPercentage = minutesToPercentage(endEvent.minutes) - startPercentage;
+
+            if (widthPercentage > 0.1) {
+                const segment = document.createElement('div');
+                segment.className = 'absolute top-0 h-full ruler-segment-item';
+                segment.style.left = `${startPercentage}%`;
+                segment.style.width = `${widthPercentage}%`;
+
+                const legendItem = document.createElement('div');
+                legendItem.className = 'flex items-center gap-2 text-xs text-slate-300';
+                const colorBox = document.createElement('span');
+                colorBox.className = 'block w-3 h-3 rounded-sm';
+                const infoText = document.createElement('span');
+                let displayLabel = '';
+                
+                let segmentClass = '';
+                const labelLower = startEvent.label.toLowerCase();
+
+                if (startEvent.type === 'work_start' || startEvent.type === 'break_end') {
+                    segmentClass = 'work-segment';
+                    displayLabel = 'Trabajo';
+                } else if (startEvent.type === 'break_start') {
+                    displayLabel = startEvent.label;
+                    if (labelLower.includes('lunch')) { segmentClass = 'break-segment-lunch'; } 
+                    else if (labelLower.includes('reposición')) { segmentClass = 'reposicion-segment'; } 
+                    else if (labelLower.includes('outage')) { segmentClass = 'break-segment-outage'; }
+                    else if (labelLower.includes('break')) { segmentClass = 'break-segment-break'; }
+                }
+                
+                if(segmentClass) segment.classList.add(segmentClass);
+                if(segmentClass) colorBox.classList.add(segmentClass);
+                
+                infoText.textContent = `${displayLabel}: ${startTimeStr} - ${endTimeStr}`;
+                const internalLabel = document.createElement('div');
+                internalLabel.className = 'segment-label';
+                internalLabel.textContent = formattedDuration;
+                segment.appendChild(internalLabel);
+                segmentsContainer.appendChild(segment);
+                legendItem.appendChild(colorBox);
+                legendItem.appendChild(infoText);
+                rulerInfoContainer.appendChild(legendItem);
+            }
+        }
+        setHour(parseInt(elements.time24hr.textContent));
+    }
+    
+    function toggleZoom() {
+        if (!lastCalculatedEvents || lastCalculatedEvents.length < 2) return;
+        isZoomed = !isZoomed;
+
+        const ampmSection = document.getElementById('ampm-section');
+        const ampmSectionZoomed = document.getElementById('ampm-section-zoomed');
+        
+        ampmSection.style.display = isZoomed ? 'none' : 'flex';
+        scheduleBar.classList.toggle('expanded', isZoomed);
+        
+        if (isZoomed) {
+            const allMinutes = lastCalculatedEvents.map(e => e.minutes);
+            const minMinutes = Math.min(...allMinutes);
+            const maxMinutes = Math.max(...allMinutes);
+            const zoomStartHour = Math.floor(minMinutes / 60);
+            const zoomEndHour = Math.ceil(maxMinutes / 60);
+
+            // Lógica para la barra AM/PM inteligente
+            if (zoomStartHour < 24 && zoomEndHour > 24) {
+                const totalZoomHours = zoomEndHour - zoomStartHour;
+                const pmHoursInZoom = 24 - zoomStartHour;
+                const pmPercentage = (pmHoursInZoom / totalZoomHours) * 100;
+                const amPercentage = 100 - pmPercentage;
+                
+                ampmSectionZoomed.innerHTML = `
+                    <div class="border-t-2 border-orange-500 text-orange-400" style="width: ${pmPercentage}%">PM</div>
+                    <div class="border-t-2 border-rose-500 text-rose-400" style="width: ${amPercentage}%">AM (Extendido)</div>
+                `;
+                ampmSectionZoomed.style.display = 'flex';
+            } else {
+                ampmSectionZoomed.style.display = 'none';
+            }
+
+            const newRange = { start: zoomStartHour, end: zoomEndHour };
+            updateRulerView(newRange, lastCalculatedEvents);
+        } else {
+            ampmSectionZoomed.style.display = 'none';
+            updateRulerView(masterHourRange, lastCalculatedEvents);
+        }
+    }
+
+    scheduleBar.addEventListener('click', toggleZoom);
 
     function parse12hToMinutes(hours, minutes, ampm) {
         if (isNaN(hours) || isNaN(minutes)) return null;
+        const baseHour = masterHourRange.start;
         if (ampm === 'pm' && hours < 12) hours += 12;
         if (ampm === 'am' && hours === 12) hours = 0;
+        if (ampm === 'am' && hours < baseHour) hours += 24;
         return (hours * 60) + minutes;
     }
     
@@ -61,21 +269,22 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function formatMinutesTo12hTime(totalMinutes) {
-        const minutesInDay = totalMinutes % (24 * 60);
-        let hours = Math.floor(minutesInDay / 60);
-        const minutes = minutesInDay % 60;
-        const ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12;
-        hours = hours ? hours : 12;
-        return `<strong>${hours}:${String(minutes).padStart(2, '0')} ${ampm}</strong>`;
+        let hours = Math.floor(totalMinutes / 60);
+        const minutes = Math.round(totalMinutes % 60);
+        const displayHours = hours % 24;
+        const ampm = displayHours >= 12 ? 'PM' : 'AM';
+        let hour12 = displayHours % 12;
+        hour12 = hour12 ? hour12 : 12;
+        return `<strong>${hour12}:${String(minutes).padStart(2, '0')} ${ampm}</strong>`;
     }
 
-    function generarResumenNarrativo(sortedEvents) {
+    function generarResumenNarrativo(sortedEvents, employeeName) {
         if (sortedEvents.length < 2) return "";
-        let phrases = [`El empleado inició su jornada a las ${formatMinutesTo12hTime(sortedEvents[0].minutes)}.`];
+        let phrases = [`La jornada de <strong>${employeeName}</strong> inició a las ${formatMinutesTo12hTime(sortedEvents[0].minutes)}.`];
         sortedEvents.forEach(event => {
             let label = event.label.toLowerCase();
             if (label.includes('break')) label = 'un break';
+            if (label.includes('reposición')) label = 'una reposición';
             switch (event.type) {
                 case 'break_start': phrases.push(`Tomó ${label} a las ${formatMinutesTo12hTime(event.minutes)}`); break;
                 case 'break_end': phrases.push(`y regresó a las ${formatMinutesTo12hTime(event.minutes)}.`); break;
@@ -86,6 +295,7 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     function calcularJornada() {
+        const employeeName = employeeNameInput.value || 'Empleado';
         const events = [];
         document.querySelectorAll('.entry-item').forEach(item => {
             const idaMins = getMinutesFromCustomInput(item.querySelector('.ida-container'));
@@ -104,37 +314,111 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
-        if (events.length < 2) { alert("Por favor, ingresa al menos la hora de entrada y salida."); return; }
+        if (events.length < 2) { 
+            console.error("Por favor, ingresa al menos la hora de entrada y salida.");
+            return; 
+        }
         events.sort((a, b) => a.minutes - b.minutes);
-        let tiempoProductivoTotal = 0, tiempoDescansoTotal = 0;
-        let breakdownHtml = '<h4>Desglose de la Jornada</h4><ul>';
+        
+        const jornadaStart = events.find(e => e.type === 'work_start')?.minutes || 0;
+        const jornadaEnd = events.find(e => e.type === 'work_end')?.minutes || 0;
+        const jornadaBrutaTotal = jornadaEnd - jornadaStart;
+
+        let tiempoProductivoTotal = 0, tiempoBreaksTotal = 0, tiempoLunchTotal = 0,
+            tiempoOutageTotal = 0, tiempoReposicionTotal = 0,
+            overbreakTotal = 0, overlunchTotal = 0;
+        
+        let overbreakDetails = [], overlunchDetails = [], outageDetails = [];
+
         for (let i = 0; i < events.length - 1; i++) {
             const duration = events[i+1].minutes - events[i].minutes;
-            if (events[i].type === 'work_start' || events[i].type === 'break_end') {
+            const startEvent = events[i];
+
+            if (startEvent.type === 'work_start' || startEvent.type === 'break_end') {
                 tiempoProductivoTotal += duration;
-                breakdownHtml += `<li><span>Bloque de Trabajo</span> <span class="duration">${formatMinutesToTime(duration)}</span></li>`;
-            } else if (events[i].type === 'break_start') {
-                tiempoDescansoTotal += duration;
-                breakdownHtml += `<li><span>${events[i].label}</span> <span class="duration">${formatMinutesToTime(duration)}</span></li>`;
+            } else if (startEvent.type === 'break_start') {
+                const eventLabel = startEvent.label;
+                const labelLower = eventLabel.toLowerCase();
+
+                if (labelLower.includes('outage')) {
+                    tiempoOutageTotal += duration;
+                    outageDetails.push(`${eventLabel}: ${duration} min`);
+                } else if (labelLower.includes('reposición')) {
+                    tiempoReposicionTotal += duration;
+                } else if (labelLower.includes('break')) {
+                    tiempoBreaksTotal += duration;
+                    const descInfo = DEFAULT_DESCANSOS.find(d => d.title === eventLabel) || { limit: 15 };
+                    if (duration > descInfo.limit) {
+                        const individualOvertime = duration - descInfo.limit;
+                        overbreakTotal += individualOvertime;
+                        overbreakDetails.push(`${eventLabel}: ${individualOvertime} min`);
+                    }
+                } else if (labelLower.includes('lunch')) {
+                    tiempoLunchTotal += duration;
+                     const descInfo = DEFAULT_DESCANSOS.find(d => d.title === eventLabel) || { limit: 60 };
+                    if (duration > descInfo.limit) {
+                        const individualOvertime = duration - descInfo.limit;
+                        overlunchTotal += individualOvertime;
+                        overlunchDetails.push(`${eventLabel}: ${individualOvertime} min`);
+                    }
+                }
             }
         }
-        document.getElementById('breakdown-container').innerHTML = breakdownHtml + '</ul>';
-        document.getElementById('summary-container').innerHTML = generarResumenNarrativo(events);
-        const MAX_DESCANSO = 1.5 * 60;
-        const tiempoAReponer = Math.max(0, tiempoDescansoTotal - MAX_DESCANSO);
-        const totalDescansosEl = document.getElementById('total-descansos');
-        totalDescansosEl.textContent = formatMinutesToTime(tiempoDescansoTotal);
-        totalDescansosEl.classList.toggle('excedido', tiempoDescansoTotal > MAX_DESCANSO);
-        const tiempoReponerWrapper = document.getElementById('tiempo-reponer-wrapper');
-        if (tiempoAReponer > 0) {
-            document.getElementById('tiempo-reponer').textContent = formatMinutesToTime(tiempoAReponer);
-            tiempoReponerWrapper.classList.remove('hidden');
-        } else {
-            tiempoReponerWrapper.classList.add('hidden');
-        }
-        const trabajoTotalEl = document.getElementById('balance');
-        trabajoTotalEl.textContent = formatMinutesToTime(tiempoProductivoTotal);
-        trabajoTotalEl.classList.remove('positivo', 'negativo');
+        
+        const totalAReponer = overbreakTotal + overlunchTotal + tiempoOutageTotal;
+        
+        document.getElementById('summary-container').innerHTML = generarResumenNarrativo(events, employeeName);
+        
+        resultsContainer.innerHTML = '';
+        
+        const resultsHTML = `
+            <div class="bg-slate-900/50 rounded-lg p-4 space-y-2 border border-slate-700">
+                <h4 class="text-lg font-bold text-center text-sky-300 mb-2">Cálculo de Jornada</h4>
+                <div class="flex justify-between items-center"><h3 class="font-semibold text-slate-300">Jornada Bruta:</h3><p class="font-bold tracking-wider">${formatMinutesToTime(jornadaBrutaTotal)}</p></div>
+                <div class="flex justify-between items-center"><h3 class="text-slate-400 pl-4">Tiempo de Breaks:</h3><p class="tracking-wider">${formatMinutesToTime(tiempoBreaksTotal)}</p></div>
+                <div class="flex justify-between items-center"><h3 class="text-slate-400 pl-4">Tiempo de Lunch:</h3><p class="tracking-wider">${formatMinutesToTime(tiempoLunchTotal)}</p></div>
+                <div class="flex justify-between items-center"><h3 class="text-slate-400 pl-4">Tiempo de Outage:</h3><p class="tracking-wider">${formatMinutesToTime(tiempoOutageTotal)}</p></div>
+                ${tiempoReposicionTotal > 0 ? `<div class="flex justify-between items-center"><h3 class="text-slate-400 pl-4">Tiempo Repuesto:</h3><p class="tracking-wider">${formatMinutesToTime(tiempoReposicionTotal)}</p></div>` : ''}
+                <hr class="border-slate-700 my-2">
+                <div class="flex justify-between items-center text-xl"><h3 class="font-bold text-green-400">Trabajo Neto:</h3><p class="font-bold tracking-wider text-green-400">${formatMinutesToTime(tiempoProductivoTotal)}</p></div>
+                ${totalAReponer > 0 ? `
+                    <div class="flex justify-between items-center text-xl mt-2 pt-2 border-t border-slate-800">
+                        <h3 class="font-bold text-red-400">Total a Reponer:</h3>
+                        <p class="font-bold tracking-wider text-red-400">${formatMinutesToTime(totalAReponer)}</p>
+                    </div>` : ''}
+                ${overbreakTotal > 0 ? `
+                    <div class="flex justify-between items-center text-rose-400">
+                        <h3 class="font-semibold">Overbreak a reponer:</h3>
+                        <div class="text-right">
+                            <p class="font-bold tracking-wider">${formatMinutesToTime(overbreakTotal)}</p>
+                            <div class="details-breakdown">${overbreakDetails.join('<br>')}</div>
+                        </div>
+                    </div>` : ''}
+                ${overlunchTotal > 0 ? `
+                    <div class="flex justify-between items-center text-rose-400">
+                        <h3 class="font-semibold">Overlunch a reponer:</h3>
+                        <div class="text-right">
+                            <p class="font-bold tracking-wider">${formatMinutesToTime(overlunchTotal)}</p>
+                            <div class="details-breakdown">${overlunchDetails.join('<br>')}</div>
+                        </div>
+                    </div>` : ''}
+                ${tiempoOutageTotal > 0 ? `
+                    <div class="flex justify-between items-center text-yellow-300">
+                        <h3 class="font-semibold">Outages a reponer:</h3>
+                        <div class="text-right">
+                            <p class="font-bold tracking-wider">${formatMinutesToTime(tiempoOutageTotal)}</p>
+                            <div class="details-breakdown">${outageDetails.join('<br>')}</div>
+                        </div>
+                    </div>` : ''}
+            </div>
+        `;
+        resultsContainer.innerHTML = resultsHTML;
+
+        lastCalculatedEvents = events;
+        isZoomed = false;
+        scheduleBar.classList.remove('expanded');
+        rulerInfoContainer.style.display = 'flex';
+        updateRulerView(masterHourRange, events);
     }
 
     function createEntryHTML(title, type, isDeletable) {
@@ -207,14 +491,31 @@ document.addEventListener('DOMContentLoaded', () => {
     });
     
     calcularBtn.addEventListener('click', calcularJornada);
-    addDescansoBtn.addEventListener('click', () => {
-        const count = document.querySelectorAll('.entry-item[data-event-type="Descanso"]').length - DEFAULT_DESCANSOS.length + 1;
-        const title = `Descanso Extra ${count}`;
+    
+    addOutageBtn.addEventListener('click', () => {
+        const count = document.querySelectorAll('.entry-item[data-event-label*="Outage"]').length + 1;
+        const title = `Outage ${count}`;
         const newEntryHTML = createEntryHTML(title, 'Descanso', true);
         const tempDiv = document.createElement('div');
         tempDiv.innerHTML = newEntryHTML;
         descansosContainer.appendChild(tempDiv.firstElementChild);
     });
 
+    addReposicionBtn.addEventListener('click', () => {
+        const count = document.querySelectorAll('.entry-item[data-event-label*="Reposición"]').length + 1;
+        const title = `Reposición ${count}`;
+        const newEntryHTML = createEntryHTML(title, 'Descanso', true);
+        const tempDiv = document.createElement('div');
+        tempDiv.innerHTML = newEntryHTML;
+        descansosContainer.appendChild(tempDiv.firstElementChild);
+    });
+    
     initCalculator();
+    const ampmSection = document.getElementById('ampm-section');
+    const ampmSectionZoomed = document.getElementById('ampm-section-zoomed');
+    const ampmHTML = ` <div class="w-[60%] border-t-2 border-orange-500 text-orange-400">PM</div> <div class="w-[40%] border-t-2 border-rose-500 text-rose-400">AM (Extendido)</div> `;
+    ampmSection.innerHTML = ampmHTML;
+    ampmSectionZoomed.innerHTML = ampmHTML;
+    updateRulerView(masterHourRange, []);
+    setInitialTime();
 });

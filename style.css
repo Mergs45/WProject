@@ -33,16 +33,63 @@ body {
 #ruler-container {
     overflow-x: scroll; 
 }
-.ruler-content-width { min-width: 800px; }
+.ruler-content-width {
+    min-width: 800px;
+}
 #ruler-container::-webkit-scrollbar { height: 8px; }
 #ruler-container::-webkit-scrollbar-track { background: rgba(0,0,0,0.2); border-radius: 4px; }
 #ruler-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 #ruler-container::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
+/* --- ESTILOS PARA LA VISUALIZACIÓN EN REGLA --- */
+.work-segment { background-color: #38bdf8; } /* sky-400 - Azul Cielo */
+.break-segment-break { background-color: #a855f7; } /* purple-500 - Morado */
+.break-segment-lunch { background-color: #f97316; } /* orange-500 - Naranja */
+.break-segment-outage { background-color: #fde047; } /* yellow-300 - Amarillo Brillante */
+.reposicion-segment { background-color: #4ade80; } /* green-400 - Verde Reposición */
+
+/* --- ESTILOS PARA REGLA EXPANDIBLE --- */
+#schedule-bar {
+    transition: height 0.3s ease-in-out;
+    cursor: zoom-in;
+}
+#schedule-bar.expanded {
+    height: 100px; /* Mayor altura para texto vertical */
+    cursor: zoom-out;
+}
+#schedule-bar.expanded .ruler-segment-item {
+     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
+     border-radius: 0; /* Bordes cuadrados en zoom */
+}
+
+.segment-label {
+    color: white;
+    font-size: 14px;
+    font-weight: 700;
+    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
+    opacity: 0;
+    transition: opacity 0.3s ease-in-out;
+    white-space: nowrap;
+    overflow: hidden;
+    writing-mode: vertical-rl;
+    text-orientation: mixed;
+    transform: rotate(180deg);
+    padding: 4px 0;
+}
+#schedule-bar.expanded .segment-label {
+    opacity: 1;
+    font-size: 16px;
+}
+.ruler-segment-item {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
 /* --- ESTILOS PARA LA CALCULADORA FINAL --- */
 .custom-time-input { display: flex; align-items: center; gap: 6px; }
 .split-time-input { display: flex; align-items: center; flex-grow: 1; background-color: #334155; border: 1px solid #475569; border-radius: 6px; padding: 0 4px; }
-.split-time-input .time-hour, .split-time-input .time-minute { width: 50%; background: transparent; border: none; color: white; text-align: center; font-size: 1.1rem; padding: 6px 2px; -moz-appearance: textfield; }
+.split-time-input .time-hour, .split-time-input .time-minute { width: 50%; background: transparent; border: none; color: white; text-align: center; font-size: 1.1rem; padding: 6px 2px;}
 .split-time-input .time-hour:focus, .split-time-input .time-minute:focus { outline: none; background-color: rgba(30, 41, 59, 0.5); }
 .split-time-input input::-webkit-outer-spin-button,
 .split-time-input input::-webkit-inner-spin-button { -webkit-appearance: none; margin: 0; }
@@ -53,16 +100,17 @@ body {
 .ampm-buttons button.active { background-color: #38bdf8; border-color: #0ea5e9; color: white; font-weight: bold; }
 .entry-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 0.5rem; }
 .header-buttons { display: flex; align-items: center; gap: 0.5rem; }
-/* Botón "borrar" de bloque */
 .clear-entry-btn { background: none; border: 1px solid #475569; color: #94a3b8; font-size: 0.7rem; padding: 2px 8px; border-radius: 4px; cursor: pointer; transition: all 0.2s ease; }
 .clear-entry-btn:hover { background: #475569; color: white; }
-/* Botón "X" de eliminar bloque extra */
 .remove-entry-btn { background: none; border: none; color: #64748b; font-size: 1.5rem; line-height: 1; cursor: pointer; padding: 0 0.25rem; transition: color 0.2s ease; }
 .remove-entry-btn:hover { color: #ef4444; }
-#breakdown-container h4 { font-size: 1.1rem; font-weight: 600; color: #cbd5e1; margin-bottom: 0.5rem; border-bottom: 1px solid #475569; padding-bottom: 0.5rem; }
-#breakdown-container ul { list-style: none; padding: 0; margin: 0; font-size: 0.9rem; }
-#breakdown-container li { display: flex; justify-content: space-between; padding: 0.5rem 0.25rem; border-bottom: 1px solid #334155; }
-#breakdown-container li:last-child { border-bottom: none; }
-#breakdown-container .duration { font-weight: 600; color: #e2e8f0; }
 #summary-container p { font-size: 0.9rem; line-height: 1.6; background-color: rgba(0, 0, 0, 0.2); padding: 0.75rem; border-radius: 8px; color: #cbd5e1; border-left: 3px solid #38bdf8; }
-#total-descansos.excedido { color: #ef4444; }
+#employee-name-input {
+    background-color: #334155; border: 1px solid #475569; border-radius: 8px; color: white; padding: 10px; font-size: 1rem; width: 100%;
+}
+.details-breakdown {
+    font-size: 0.75rem;
+    line-height: 1.5;
+    text-align: right;
+    color: #94a3b8;
+}
