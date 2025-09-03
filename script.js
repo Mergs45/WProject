@@ -45,6 +45,12 @@ function updatePosition(clientX) {
 function setInitialTime() { 
     const now = new Date(); 
     let currentHour = now.getHours(); 
+    if (currentHour < 12) {
+         currentHour += 24;
+    }
+    if (currentHour > activeHourRange.end) {
+        currentHour = activeHourRange.end;
+    }
     if (currentHour < activeHourRange.start) { 
         currentHour = activeHourRange.start; 
     } 
@@ -141,13 +147,21 @@ document.addEventListener('DOMContentLoaded', () => {
         }
 
         if (!events || events.length === 0) return;
+        
+        // Ordenar eventos para la visualización
+        const typeOrder = { 'work_start': 1, 'break_end': 2, 'break_start': 3, 'work_end': 4 };
+        events.sort((a, b) => {
+            if (a.minutes !== b.minutes) return a.minutes - b.minutes;
+            return (typeOrder[a.type] || 99) - (typeOrder[b.type] || 99);
+        });
+
 
         for (let i = 0; i < events.length - 1; i++) {
             const startEvent = events[i];
             const endEvent = events[i + 1];
 
             const durationInMinutes = endEvent.minutes - startEvent.minutes;
-            if (durationInMinutes <= 0) continue;
+            if (durationInMinutes < 0) continue; // Evitar duraciones negativas
 
             const formattedDuration = formatMinutesToTime(durationInMinutes);
             const startTimeStr = formatMinutesTo12hTime(startEvent.minutes).replace(/<\/?strong>/g, '');
@@ -244,10 +258,13 @@ document.addEventListener('DOMContentLoaded', () => {
 
     function parse12hToMinutes(hours, minutes, ampm) {
         if (isNaN(hours) || isNaN(minutes)) return null;
-        const baseHour = masterHourRange.start;
-        if (ampm === 'pm' && hours < 12) hours += 12;
+        const baseHour = 12; 
+        if (ampm === 'pm' && hours < 12) hours += 12; 
         if (ampm === 'am' && hours === 12) hours = 0;
-        if (ampm === 'am' && hours < baseHour) hours += 24;
+        
+        if (ampm === 'am' && hours < baseHour) {
+            hours += 24; 
+        }
         return (hours * 60) + minutes;
     }
     
@@ -281,22 +298,33 @@ document.addEventListener('DOMContentLoaded', () => {
     function generarResumenNarrativo(sortedEvents, employeeName) {
         if (sortedEvents.length < 2) return "";
         let phrases = [`La jornada de <strong>${employeeName}</strong> inició a las ${formatMinutesTo12hTime(sortedEvents[0].minutes)}.`];
-        sortedEvents.forEach(event => {
-            let label = event.label.toLowerCase();
-            if (label.includes('break')) label = 'un break';
-            if (label.includes('reposición')) label = 'una reposición';
-            switch (event.type) {
-                case 'break_start': phrases.push(`Tomó ${label} a las ${formatMinutesTo12hTime(event.minutes)}`); break;
-                case 'break_end': phrases.push(`y regresó a las ${formatMinutesTo12hTime(event.minutes)}.`); break;
-                case 'work_end': phrases.push(`Finalmente, su jornada terminó a las ${formatMinutesTo12hTime(event.minutes)}.`); break;
+
+        const breakEvents = sortedEvents.filter(e => e.type === 'break_start');
+        
+        breakEvents.forEach(startEvent => {
+            const endEvent = sortedEvents.find(e => e.type === 'break_end' && e.label === startEvent.label);
+            if(endEvent) {
+                 let label = startEvent.label.toLowerCase();
+                if (label.includes('break 1') || label.includes('break 2')) label = 'un break';
+                if (label.includes('reposición')) label = 'una reposición';
+                if (label.includes('lunch')) label = 'su lunch';
+                if (label.includes('outage')) label = 'un outage';
+                phrases.push(`Tomó ${label} a las ${formatMinutesTo12hTime(startEvent.minutes)} y regresó a las ${formatMinutesTo12hTime(endEvent.minutes)}.`);
             }
         });
-        return `<p>${phrases.join(' ').replace(/\. T/g, ', t')}</p>`;
+        
+        const endWorkEvent = sortedEvents.find(e => e.type === 'work_end');
+        if(endWorkEvent){
+            phrases.push(`Finalmente, su jornada terminó a las ${formatMinutesTo12hTime(endWorkEvent.minutes)}.`);
+        }
+        
+        return `<p>${phrases.join(' ')}</p>`;
     }
+
 
     function calcularJornada() {
         const employeeName = employeeNameInput.value || 'Empleado';
-        const events = [];
+        let events = [];
         document.querySelectorAll('.entry-item').forEach(item => {
             const idaMins = getMinutesFromCustomInput(item.querySelector('.ida-container'));
             const regresoMins = getMinutesFromCustomInput(item.querySelector('.regreso-container'));
@@ -314,60 +342,78 @@ document.addEventListener('DOMContentLoaded', () => {
                 }
             }
         });
+
         if (events.length < 2) { 
-            console.error("Por favor, ingresa al menos la hora de entrada y salida.");
+            resultsContainer.innerHTML = `<p class="text-center text-red-400">Por favor, ingresa al menos la hora de entrada y salida de la jornada.</p>`;
             return; 
         }
-        events.sort((a, b) => a.minutes - b.minutes);
-        
-        const jornadaStart = events.find(e => e.type === 'work_start')?.minutes || 0;
-        const jornadaEnd = events.find(e => e.type === 'work_end')?.minutes || 0;
+
+        const jornadaStartEvent = events.find(e => e.type === 'work_start');
+        const jornadaEndEvent = events.find(e => e.type === 'work_end');
+
+        if (!jornadaStartEvent || !jornadaEndEvent) {
+            resultsContainer.innerHTML = `<p class="text-center text-red-400">Error: No se pudo determinar el inicio o fin de la jornada.</p>`;
+            return;
+        }
+
+        const jornadaStart = jornadaStartEvent.minutes;
+        const jornadaEnd = jornadaEndEvent.minutes;
         const jornadaBrutaTotal = jornadaEnd - jornadaStart;
 
-        let tiempoProductivoTotal = 0, tiempoBreaksTotal = 0, tiempoLunchTotal = 0,
+        let tiempoBreaksTotal = 0, tiempoLunchTotal = 0,
             tiempoOutageTotal = 0, tiempoReposicionTotal = 0,
-            overbreakTotal = 0, overlunchTotal = 0;
+            overbreakTotal = 0, overlunchTotal = 0,
+            totalNonProductiveTime = 0;
         
         let overbreakDetails = [], overlunchDetails = [], outageDetails = [];
+        
+        const breakStartEvents = events.filter(e => e.type === 'break_start');
 
-        for (let i = 0; i < events.length - 1; i++) {
-            const duration = events[i+1].minutes - events[i].minutes;
-            const startEvent = events[i];
+        breakStartEvents.forEach(startEvent => {
+            const endEvent = events.find(e => e.type === 'break_end' && e.label === startEvent.label && e.minutes >= startEvent.minutes);
+            if (endEvent) {
+                const breakStartMins = Math.max(startEvent.minutes, jornadaStart);
+                const breakEndMins = Math.min(endEvent.minutes, jornadaEnd);
+                const duration = breakEndMins - breakStartMins;
 
-            if (startEvent.type === 'work_start' || startEvent.type === 'break_end') {
-                tiempoProductivoTotal += duration;
-            } else if (startEvent.type === 'break_start') {
-                const eventLabel = startEvent.label;
-                const labelLower = eventLabel.toLowerCase();
+                if (duration > 0) {
+                    totalNonProductiveTime += duration;
+                    const eventLabel = startEvent.label;
+                    const labelLower = eventLabel.toLowerCase();
 
-                if (labelLower.includes('outage')) {
-                    tiempoOutageTotal += duration;
-                    outageDetails.push(`${eventLabel}: ${duration} min`);
-                } else if (labelLower.includes('reposición')) {
-                    tiempoReposicionTotal += duration;
-                } else if (labelLower.includes('break')) {
-                    tiempoBreaksTotal += duration;
-                    const descInfo = DEFAULT_DESCANSOS.find(d => d.title === eventLabel) || { limit: 15 };
-                    if (duration > descInfo.limit) {
-                        const individualOvertime = duration - descInfo.limit;
-                        overbreakTotal += individualOvertime;
-                        overbreakDetails.push(`${eventLabel}: ${individualOvertime} min`);
-                    }
-                } else if (labelLower.includes('lunch')) {
-                    tiempoLunchTotal += duration;
-                     const descInfo = DEFAULT_DESCANSOS.find(d => d.title === eventLabel) || { limit: 60 };
-                    if (duration > descInfo.limit) {
-                        const individualOvertime = duration - descInfo.limit;
-                        overlunchTotal += individualOvertime;
-                        overlunchDetails.push(`${eventLabel}: ${individualOvertime} min`);
+                    if (labelLower.includes('outage')) {
+                        tiempoOutageTotal += duration;
+                        outageDetails.push(`${eventLabel}: ${duration} min`);
+                    } else if (labelLower.includes('reposición')) {
+                        tiempoReposicionTotal += duration;
+                    } else if (labelLower.includes('break')) {
+                        tiempoBreaksTotal += duration;
+                        const descInfo = DEFAULT_DESCANSOS.find(d => d.title === eventLabel) || { limit: 15 };
+                        if (duration > descInfo.limit) {
+                            const individualOvertime = duration - descInfo.limit;
+                            overbreakTotal += individualOvertime;
+                            overbreakDetails.push(`${eventLabel}: ${individualOvertime} min`);
+                        }
+                    } else if (labelLower.includes('lunch')) {
+                        tiempoLunchTotal += duration;
+                        const descInfo = DEFAULT_DESCANSOS.find(d => d.title === eventLabel) || { limit: 60 };
+                        if (duration > descInfo.limit) {
+                            const individualOvertime = duration - descInfo.limit;
+                            overlunchTotal += individualOvertime;
+                            overlunchDetails.push(`${eventLabel}: ${individualOvertime} min`);
+                        }
                     }
                 }
             }
-        }
-        
+        });
+
+        const tiempoProductivoTotal = jornadaBrutaTotal - totalNonProductiveTime;
         const totalAReponer = overbreakTotal + overlunchTotal + tiempoOutageTotal;
         
-        document.getElementById('summary-container').innerHTML = generarResumenNarrativo(events, employeeName);
+        // Ordenar eventos solo para el resumen narrativo
+        let sortedEventsForSummary = [...events];
+        sortedEventsForSummary.sort((a, b) => a.minutes - b.minutes);
+        document.getElementById('summary-container').innerHTML = generarResumenNarrativo(sortedEventsForSummary, employeeName);
         
         resultsContainer.innerHTML = '';
         
@@ -467,8 +513,11 @@ document.addEventListener('DOMContentLoaded', () => {
         if (input.matches('.time-hour, .time-minute') && input.value.length > 2) {
             input.value = input.value.slice(0, 2);
         }
-        if (input.matches('.time-hour') && input.value.length >= 2) {
-            input.closest('.split-time-input').querySelector('.time-minute').focus();
+        if (input.matches('.time-hour') && input.value.length >= 1) { // Focus next on 1 or 2 digits
+            const hourVal = parseInt(input.value);
+            if(hourVal > 1 || input.value.length === 2) {
+               input.closest('.split-time-input').querySelector('.time-minute').focus();
+            }
         }
     });
 
@@ -513,9 +562,10 @@ document.addEventListener('DOMContentLoaded', () => {
     initCalculator();
     const ampmSection = document.getElementById('ampm-section');
     const ampmSectionZoomed = document.getElementById('ampm-section-zoomed');
-    const ampmHTML = ` <div class="w-[60%] border-t-2 border-orange-500 text-orange-400">PM</div> <div class="w-[40%] border-t-2 border-rose-500 text-rose-400">AM (Extendido)</div> `;
+    const ampmHTML = ` <div class="w-[50%] border-t-2 border-orange-500 text-orange-400">PM</div> <div class="w-[50%] border-t-2 border-rose-500 text-rose-400">AM (Extendido)</div> `;
     ampmSection.innerHTML = ampmHTML;
     ampmSectionZoomed.innerHTML = ampmHTML;
     updateRulerView(masterHourRange, []);
     setInitialTime();
 });
+// =====================================================================
