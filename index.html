@@ -4,10 +4,12 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Las horas de Wen ♥</title>
+    <!-- Librerías y fuentes externas -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Dancing+Script:wght@700&family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Enlace a tu hoja de estilos -->
     <link rel="stylesheet" href="style.css">
 </head>
 <body class="bg-slate-900 text-white py-8 px-4">
@@ -21,17 +23,11 @@
             <div class="my-auto select-none">
                 <div id="ruler-container" class="w-full pb-4">
                     <div class="ruler-content-width relative">
-                        <div id="ampm-section-zoomed" class="relative w-full flex-none text-center text-base md:text-lg font-bold hidden mb-2"></div>
                         <div id="top-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mb-3 h-5"></div>
                         <div id="time-ruler" class="relative w-full h-8 md:h-10 rounded-full time-ruler-gradient overflow-hidden">
                             <div id="marker" class="absolute"></div>
                         </div>
-                        <div id="schedule-bar" class="relative w-full h-4 mt-1 bg-slate-700 rounded-full">
-                            <div id="ruler-segments" class="absolute top-0 left-0 w-full h-full"></div>
-                        </div>
-                        <div id="bottom-labels" class="relative flex text-xs md:text-sm font-medium text-slate-300 mt-3 h-5"></div>
                         <div id="ampm-section" class="relative w-full flex text-center text-base md:text-lg font-bold mt-6 mb-2 pt-2"></div>
-                        <div id="ruler-info-container" class="mt-4 flex flex-wrap gap-x-4 gap-y-2 justify-center"></div>
                     </div>
                 </div>
             </div>
@@ -72,6 +68,7 @@
         <div id="signature" class="absolute bottom-4 right-6 md:bottom-6 md:right-10 text-xl md:text-2xl text-slate-500">Wen</div>
     </div>
     
+    <!-- Enlace a tu archivo de JavaScript -->
     <script src="script.js"></script>
 </body>
 </html>

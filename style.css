@@ -41,51 +41,6 @@ body {
 #ruler-container::-webkit-scrollbar-thumb { background: #475569; border-radius: 4px; }
 #ruler-container::-webkit-scrollbar-thumb:hover { background: #64748b; }
 
-/* --- ESTILOS PARA LA VISUALIZACIÓN EN REGLA --- */
-.work-segment { background-color: #38bdf8; } /* sky-400 - Azul Cielo */
-.break-segment-break { background-color: #a855f7; } /* purple-500 - Morado */
-.break-segment-lunch { background-color: #f97316; } /* orange-500 - Naranja */
-.break-segment-outage { background-color: #fde047; } /* yellow-300 - Amarillo Brillante */
-.reposicion-segment { background-color: #4ade80; } /* green-400 - Verde Reposición */
-
-/* --- ESTILOS PARA REGLA EXPANDIBLE --- */
-#schedule-bar {
-    transition: height 0.3s ease-in-out;
-    cursor: zoom-in;
-}
-#schedule-bar.expanded {
-    height: 100px; /* Mayor altura para texto vertical */
-    cursor: zoom-out;
-}
-#schedule-bar.expanded .ruler-segment-item {
-     box-shadow: 0 2px 5px rgba(0,0,0,0.3);
-     border-radius: 0; /* Bordes cuadrados en zoom */
-}
-
-.segment-label {
-    color: white;
-    font-size: 14px;
-    font-weight: 700;
-    text-shadow: 1px 1px 2px rgba(0,0,0,0.7);
-    opacity: 0;
-    transition: opacity 0.3s ease-in-out;
-    white-space: nowrap;
-    overflow: hidden;
-    writing-mode: vertical-rl;
-    text-orientation: mixed;
-    transform: rotate(180deg);
-    padding: 4px 0;
-}
-#schedule-bar.expanded .segment-label {
-    opacity: 1;
-    font-size: 16px;
-}
-.ruler-segment-item {
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-
 /* --- ESTILOS PARA LA CALCULADORA FINAL --- */
 .custom-time-input { display: flex; align-items: center; gap: 6px; }
 .split-time-input { display: flex; align-items: center; flex-grow: 1; background-color: #334155; border: 1px solid #475569; border-radius: 6px; padding: 0 4px; }
