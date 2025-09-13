@@ -130,6 +130,7 @@ document.addEventListener('DOMContentLoaded', () => {
         `;
     }
 
+    // <-- ***** INICIO DEL PRIMER CAMBIO ***** -->
     function getMinutesFromCustomInput(container) {
         const hourInput = container.querySelector('.time-hour');
         const minuteInput = container.querySelector('.time-minute');
@@ -142,15 +143,16 @@ document.addEventListener('DOMContentLoaded', () => {
         if (isNaN(hours) || isNaN(minutes) || hours < 1 || hours > 12 || minutes < 0 || minutes > 59) return null;
 
         let hours24 = hours;
-        if (ampm === 'pm' && hours24 < 12) hours24 += 12;
-        if (ampm === 'am' && hours24 === 12) hours24 = 0;
-
-        if (hours24 < 12) {
-            hours24 += 24;
+        if (ampm === 'pm' && hours24 < 12) {
+            hours24 += 12;
+        }
+        if (ampm === 'am' && hours24 === 12) { // Esto convierte 12 AM en la hora 0
+            hours24 = 0;
         }
 
         return (hours24 * 60) + minutes;
     }
+    // <-- ***** FIN DEL PRIMER CAMBIO ***** -->
 
     function formatMinutesToTime(totalMinutes) {
         if (totalMinutes < 0) totalMinutes = 0;
@@ -212,10 +214,12 @@ document.addEventListener('DOMContentLoaded', () => {
             return;
         }
 
+        // <-- ***** INICIO DEL SEGUNDO CAMBIO ***** -->
         if (jornadaEndMins <= jornadaStartMins) {
-            resultsContainer.innerHTML = `<p class="text-center text-red-400">La hora de fin de jornada no puede ser anterior o igual a la de inicio.</p>`;
-            return;
+            // Asumimos que es un turno nocturno y añadimos 24 horas (1440 minutos) a la hora de fin.
+            jornadaEndMins += 24 * 60;
         }
+        // <-- ***** FIN DEL SEGUNDO CAMBIO ***** -->
 
         events.push({ minutes: jornadaStartMins, type: 'work_start', label: 'Jornada' });
         events.push({ minutes: jornadaEndMins, type: 'work_end', label: 'Jornada' });
@@ -225,6 +229,10 @@ document.addEventListener('DOMContentLoaded', () => {
             let regresoMins = getMinutesFromCustomInput(item.querySelector('.regreso-container'));
 
             if (idaMins !== null && regresoMins !== null) {
+                // Para los descansos, también manejamos el caso de cruce de medianoche
+                if (regresoMins <= idaMins) {
+                    regresoMins += 24 * 60;
+                }
                 rawBreaks.push({ start: idaMins, end: regresoMins, label: item.dataset.eventLabel });
                 events.push({ minutes: idaMins, type: 'break_start', label: item.dataset.eventLabel });
                 events.push({ minutes: regresoMins, type: 'break_end', label: item.dataset.eventLabel });
@@ -302,7 +310,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>` : ''}
             </div>`;
 
-        setHour(Math.floor(jornadaStartMins / 60));
+        setHour(Math.floor((jornadaStartMins/60) % 24 < 12 ? (jornadaStartMins/60) % 24 + 24 : (jornadaStartMins/60) % 24));
     }
 
     function createEntryHTML(title, type, isDeletable) {
