@@ -224,15 +224,26 @@ document.addEventListener('DOMContentLoaded', () => {
         events.push({ minutes: jornadaStartMins, type: 'work_start', label: 'Jornada' });
         events.push({ minutes: jornadaEndMins, type: 'work_end', label: 'Jornada' });
 
+        // Nueva versión corregida del bloque
+
         document.querySelectorAll('#descansos-container .entry-item').forEach(item => {
             let idaMins = getMinutesFromCustomInput(item.querySelector('.ida-container'));
             let regresoMins = getMinutesFromCustomInput(item.querySelector('.regreso-container'));
 
             if (idaMins !== null && regresoMins !== null) {
-                // Para los descansos, también manejamos el caso de cruce de medianoche
+                // LÓGICA CLAVE: Si la jornada es nocturna (fin > inicio) y la hora de un descanso
+                // es numéricamente menor que el inicio de la jornada, significa que ocurrió
+                // en el siguiente día y debemos sumarle 24 horas para alinear los tiempos.
+                if (jornadaEndMins > jornadaStartMins && idaMins < jornadaStartMins) {
+                    idaMins += 24 * 60;
+                    regresoMins += 24 * 60;
+                }
+
+                // Después, manejamos descansos que cruzan la medianoche (ej. 11:50pm a 12:15am)
                 if (regresoMins <= idaMins) {
                     regresoMins += 24 * 60;
                 }
+
                 rawBreaks.push({ start: idaMins, end: regresoMins, label: item.dataset.eventLabel });
                 events.push({ minutes: idaMins, type: 'break_start', label: item.dataset.eventLabel });
                 events.push({ minutes: regresoMins, type: 'break_end', label: item.dataset.eventLabel });
